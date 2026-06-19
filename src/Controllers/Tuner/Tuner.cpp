@@ -250,9 +250,28 @@ Tuner::cbMode(Controller *instance,
     tuner->cbCancel(instance, NULL);
     const Mode value = (Mode)atol(args);
 
+    const Mode prevMode = tuner->driver.getMode();
     const uint32_t prevFrequency = tuner->driver.getFrequency();
-    const uint32_t prevStep = tuner->driver.getFrequency();
-    if (tuner->driver.setMode(value))
+    const uint32_t prevStep = tuner->driver.getStep();
+
+    if (prevMode == MODE_FM || prevMode == MODE_AM)
+    {
+        tuner->lastFrequency[prevMode] = prevFrequency;
+    }
+
+    bool ok;
+    if ((value == MODE_FM || value == MODE_AM) &&
+        tuner->lastFrequency[value])
+    {
+        ok = tuner->driver.setFrequency(tuner->lastFrequency[value],
+                                        TunerDriver::TUNE_DEFAULT);
+    }
+    else
+    {
+        ok = tuner->driver.setMode(value);
+    }
+
+    if (ok)
     {
         tuner->clear();
         tuner->feedback(FMDX_TUNER_PROTOCOL_MODE, value);
@@ -301,6 +320,18 @@ Tuner::cbFrequency(Controller *instance,
 
         const uint32_t newAlignment = tuner->driver.getAlignment();
         tuner->feedback(FMDX_TUNER_PROTOCOL_ALIGNMENT, newAlignment);
+
+        const Mode curMode = tuner->driver.getMode();
+        if (curMode == MODE_FM || curMode == MODE_AM)
+        {
+            tuner->lastFrequency[curMode] = newFrequency;
+        }
+        if ((prevMode == MODE_FM || prevMode == MODE_AM) &&
+            prevMode != curMode)
+        {
+            tuner->lastFrequency[prevMode] = prevFrequency;
+        }
+
         return true;
     }
 

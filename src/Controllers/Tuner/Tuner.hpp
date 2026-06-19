@@ -72,6 +72,8 @@ private:
     Scan scan{driver, volume};
     bool stereo = true;
 
+    uint32_t lastFrequency[2] = {0, 0};
+
     Timer timerQuality;
     Timer timerSquelch;
 };
