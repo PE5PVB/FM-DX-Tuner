@@ -43,6 +43,7 @@ private:
     void handleRds();
     void handleQuality();
     void handleSquelch();
+    void handleAutosquelch();
     void handleScan();
 
     /* Callbacks for dispatcher */
@@ -55,6 +56,7 @@ private:
     static bool cbBandwidth(Controller *instance, const char *args);
     static bool cbVolume(Controller *instance, const char *args);
     static bool cbSquelch(Controller *instance, const char *args);
+    static bool cbAutosquelch(Controller *instance, const char *args);
     static bool cbOutputMode(Controller *instance, const char *args);
     static bool cbQuality(Controller *instance, const char *args);
     static bool cbScan(Controller *instance, const char *args);
@@ -65,10 +67,12 @@ private:
 
     TunerDriver::QualityMode qualityMode = TunerDriver::QUALITY_DEFAULT;
     static constexpr uint8_t squelchTimeout = 5;
+    static constexpr uint8_t autosquelchTimeout = 20;
 
     TunerDriver &driver;
     Volume volume{driver};
     Squelch squelch{volume, squelchTimeout};
+    Squelch autosquelch{volume, autosquelchTimeout};
     Scan scan{driver, volume};
     bool stereo = true;
 

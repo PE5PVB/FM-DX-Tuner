@@ -58,6 +58,7 @@ Tuner::loop()
     if (timerSquelch.process(Timer::Continous))
     {
         this->handleSquelch();
+        this->handleAutosquelch();
     }
 }
 
@@ -75,6 +76,7 @@ Tuner::getCommands(uint8_t *len)
         { FMDX_TUNER_PROTOCOL_BANDWIDTH, &this->cbBandwidth },
         { FMDX_TUNER_PROTOCOL_VOLUME, &this->cbVolume },
         { FMDX_TUNER_PROTOCOL_SQUELCH, &this->cbSquelch },
+        { FMDX_TUNER_PROTOCOL_AUTOSQUELCH, &this->cbAutosquelch },
         { FMDX_TUNER_PROTOCOL_OUTPUT_MODE, &this->cbOutputMode },
         { FMDX_TUNER_PROTOCOL_QUALITY, &this->cbQuality },
         { FMDX_TUNER_PROTOCOL_SCAN, &this->cbScan },
@@ -225,6 +227,18 @@ Tuner::handleSquelch()
     }
 
     this->squelch.process(value);
+}
+
+void
+Tuner::handleAutosquelch()
+{
+    if (this->autosquelch.getMode() == SQUELCH_NONE)
+    {
+        return;
+    }
+
+    this->autosquelch.setTimeout(this->driver.getMode() == MODE_AM ? 1 : autosquelchTimeout);
+    this->autosquelch.process(this->driver.getSquelch() ? 1 : 0);
 }
 
 bool
@@ -447,6 +461,27 @@ Tuner::cbSquelch(Controller *instance,
     }
 
     tuner->feedback(FMDX_TUNER_PROTOCOL_SQUELCH, value);
+    return true;
+}
+
+bool
+Tuner::cbAutosquelch(Controller *instance,
+                     const char *args)
+{
+    Tuner *tuner = (Tuner*)instance;
+    tuner->cbCancel(instance, NULL);
+    const bool enable = (atol(args) != 0);
+
+    if (enable)
+    {
+        tuner->autosquelch.set(SQUELCH_AUTO, 1);
+    }
+    else
+    {
+        tuner->autosquelch.set(SQUELCH_NONE, 0);
+    }
+
+    tuner->feedback(FMDX_TUNER_PROTOCOL_AUTOSQUELCH, enable ? 1 : 0);
     return true;
 }
 

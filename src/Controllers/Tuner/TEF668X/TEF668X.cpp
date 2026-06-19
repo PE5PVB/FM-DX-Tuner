@@ -554,6 +554,34 @@ TEF668X::getQualityStereo(QualityMode mode)
     return false;
 }
 
+bool
+TEF668X::getSquelch()
+{
+    /* Autosquelch open criteria (hardcoded thresholds, tune to taste).
+       Mirrors the PE5PVB TEF6686 firmware: USN (noise), WAM (co-channel)
+       and frequency offset must all be within limits. The USN limits
+       correspond to fmscansens/amscansens * 30 in that firmware. */
+    if (this->mode == MODE_FM)
+    {
+        constexpr uint16_t usnMax = 300;
+        constexpr uint16_t wamMax = 230;
+        constexpr int16_t offsetMax = 100;
+        return (this->squelchUsn < usnMax) &&
+               (this->squelchWam < wamMax) &&
+               (this->squelchOffset > -offsetMax && this->squelchOffset < offsetMax);
+    }
+
+    if (this->mode == MODE_AM)
+    {
+        constexpr uint16_t usnMax = 300;
+        constexpr int16_t offsetMax = 2;
+        return (this->squelchUsn < usnMax) &&
+               (this->squelchOffset > -offsetMax && this->squelchOffset < offsetMax);
+    }
+
+    return true;
+}
+
 const char*
 TEF668X::getName()
 {
@@ -667,6 +695,10 @@ TEF668X::readQuality()
         this->rssi.add(data.level * 10);
         this->cci.add(data.coChannel);
         this->bw.add(data.bandwidth / 10);
+
+        this->squelchUsn = data.noise;
+        this->squelchWam = data.coChannel;
+        this->squelchOffset = data.offset;
     }
 }
 

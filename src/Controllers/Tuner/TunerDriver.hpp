@@ -63,6 +63,7 @@ public:
     virtual int16_t getQualityOffset(QualityMode mode) = 0;
     virtual int16_t getQualityBandwidth(QualityMode mode) = 0;
     virtual bool getQualityStereo(QualityMode mode) = 0;
+    virtual bool getSquelch() { return true; }
 
     virtual const char* getName() = 0;
     
